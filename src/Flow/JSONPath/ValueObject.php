@@ -50,6 +50,10 @@ class ValueObject implements Iterator, ArrayAccess, JsonSerializable, Countable
     {
         return $this->path;    
 	}
+    
+    public function jsonPointer(){
+        return trim(str_replace("'",'',str_replace('][','/',str_replace('$[', '/', $this->path))),']');
+    }
 	
 	public function get(){
 		return $this->value;

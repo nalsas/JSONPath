@@ -165,7 +165,8 @@ class JSONPath implements ArrayAccess, Iterator, JsonSerializable, Countable
      */
     public function dataWithPath()
     {
-        return $this->data;
+        $data = $this->data instanceof ValueObject ? $this->data: new ValueObject($this->data, '$');
+        return $data;
     }
     
 	public function paths()
@@ -173,6 +174,14 @@ class JSONPath implements ArrayAccess, Iterator, JsonSerializable, Countable
 		$data = $this->data instanceof ValueObject ? $this->data->get(): $this->data;
 		if(empty($data)) return new static([], $this->options);
 		return new static(array_map(function($each){ return @$each->path(); }, $data), $this->options);
+    }
+    
+    public function jsonPointers(){
+        $paths = $this->paths();
+        $paths = array_map(function($path){
+            return trim(str_replace("'",'',str_replace('][','/',str_replace('$[', '/', $path))),']');
+        }, $paths->data());
+        return $paths;
     }
 
     public function offsetExists($offset)
