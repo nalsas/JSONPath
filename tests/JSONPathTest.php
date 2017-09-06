@@ -141,6 +141,18 @@ class JSONPathTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * $..books[?(@.author in ["J. R. R. Tolkien", "Nigel Rees"])]
+     * Filter books that have a title in ["...", "..."]
+     */
+    public function testQueryMatchIn()
+    {
+        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find('$..books[?(@.author in ["J. R. R. Tolkien", "Nigel Rees"])].title');
+        $resultArray = $result->data();
+        $expectedArray = ['The Lord of the Rings', 'Sayings of the Century'];
+        $this->assertEquals(ksort($expectedArray), ksort($resultArray));
+    }
+
+    /**
      * $.store.books[*].author
      */
     public function testWildcardAltNotation()
@@ -365,32 +377,8 @@ class JSONPathTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('c', $lastKey);
     }
-    
-    public function testResultPath()
-    {
-        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find('$.store.books[0].title');
-        $resultWithPath = $result->dataWithPath();
-        $this->assertEquals('Sayings of the Century', $resultWithPath[0]->get());
-        $this->assertEquals("$['store']['books'][0]['title']", $resultWithPath[0]->path());
-        
-		$result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][0]['title']");
-        $resultWithPath = $result->dataWithPath();
-		$this->assertEquals('Sayings of the Century', $resultWithPath[0]->get());
-		$this->assertEquals("$['store']['books'][0]['title']", $resultWithPath[0]->path());
-        
-		$result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$['store']['books'][:].title");
-		$this->assertEquals(["$['store']['books'][0]['title']", "$['store']['books'][1]['title']", "$['store']['books'][2]['title']", "$['store']['books'][3]['title']"], $result->paths()->data());
 
-        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$..books[?(@.isbn)].isbn");
-		$this->assertEquals(["$['store']['books'][2]['isbn']", "$['store']['books'][3]['isbn']"], $result->paths()->data());
 
-        $result = (new JSONPath($this->exampleData(rand(0, 1))))->find("$..books[(@.length-1)].title");
-        $this->assertEquals(["$['store']['books'][3]['title']"], $result->paths()->data());
-       	
-		$result = (new JSONPath($this->exampleDataExtra()))->find("$['http://www.w3.org/2000/01/rdf-schema#label'][?(@['@language']='en')]['@language']");
-		$this->assertEquals(["$['http://www.w3.org/2000/01/rdf-schema#label'][0]['@language']"], $result->paths()->data());
-    }
-    
     public function exampleData($asArray = true)
     {
         $json = '
@@ -484,17 +472,6 @@ class JSONPathTest extends \PHPUnit_Framework_TestCase
                     "image/gif": "/core/img/filetypes/image.png",
                     "application/postscript": "/core/img/filetypes/image-vector.png"
                 }
-            }
-        ';
-
-        return json_decode($json, $asArray);
-    }
-
-    public function exampleDataWithSimpleIntegers($asArray = true)
-    {
-        $json = '
-            {
-                "features": [{"name": "foo", "value": 1},{"name": "bar", "value": 2},{"name": "baz", "value": 1}]
             }
         ';
 
